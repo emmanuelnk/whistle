@@ -1,0 +1,38 @@
+{
+  "name": "whistle",
+  "version": "1.0.0",
+  "description": "A chat app",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "nodemon --watch server --watch package.json server/index.js --exec babel-node --presets es2015,stage-2"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-eslint": "^8.2.1",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-stage-2": "^6.24.1",
+    "eslint": "^4.15.0",
+    "eslint-config-airbnb": "^16.1.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-jsx-a11y": "^6.0.3",
+    "eslint-plugin-react": "^7.5.1",
+    "nodemon": "^1.14.10"
+  },
+  "dependencies": {
+    "apollo-server-express": "^1.3.2",
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2",
+    "faker": "^4.1.0",
+    "graphql": "^0.12.3",
+    "graphql-date": "^1.0.3",
+    "graphql-server-express": "^1.3.2",
+    "graphql-tools": "^2.18.0",
+    "ip": "^1.1.5",
+    "ipaddr": "^0.0.9",
+    "lodash": "^4.17.4",
+    "npm": "^5.6.0",
+    "sequelize": "^4.31.1",
+    "sqlite3": "^3.1.13"
+  }
+}
