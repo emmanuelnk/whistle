@@ -3,6 +3,9 @@ import {
     ActivityIndicator,
     FlatList,
     KeyboardAvoidingView,
+    Image,
+    Text,
+    TouchableOpacity,
     StyleSheet,
     View,
 } from 'react-native';
@@ -25,6 +28,23 @@ const styles = StyleSheet.create({
     loading: {
         justifyContent: 'center',
     },
+    titleWrapper: {
+        alignItems: 'center',
+        position: 'absolute',
+        left: 0,
+        right: 0,
+    },
+    title: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    titleImage: {
+        marginRight: 6,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+    },
+
 });
 
 // const fakeData = () => _.times(100, i => ({
@@ -57,10 +77,29 @@ class Messages extends Component {
     }
 
     static navigationOptions = ({ navigation }) => {
-        const { state } = navigation;
-        return {
+        const { state, navigate } = navigation;
+
+        const goToGroupDetails = navigate.bind(this, 'GroupDetails', {
+            id: state.params.groupId,
             title: state.params.title,
-        };
+        });
+
+        return {
+            headerTitle: (
+                <TouchableOpacity
+                    style={styles.titleWrapper}
+                    onPress={goToGroupDetails}
+                >
+                    <View style={styles.title}>
+                        <Image
+                            style={styles.titleImage}
+                            source={{ uri: 'https://facebook.github.io/react/img/logo_og.png' }}
+                        />
+                        <Text>{state.params.title}</Text>
+                    </View>
+                </TouchableOpacity>
+            ),
+        }
     };
 
 

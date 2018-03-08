@@ -5,6 +5,7 @@ import {
     ActivityIndicator,
     FlatList,
     StyleSheet,
+    Button,
     Text,
     TouchableHighlight,
     View,
@@ -35,12 +36,32 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         flex: 0.7,
     },
+    header: {
+        alignItems: 'flex-end',
+        padding: 6,
+        borderColor: '#eee',
+        borderBottomWidth: 1,
+    },
+    warning: {
+        textAlign: 'center',
+        padding: 12,
+    },
 });
 // create fake data to populate our FlatList
 const fakeData = () => _.times(100, i => ({
     id: i,
     name: `Group ${i}`,
 }));
+
+const Header = ({ onPress }) => (
+    <View style={styles.header}>
+        <Button title={'New Group'} onPress={onPress} />
+    </View>
+);
+Header.propTypes = {
+    onPress: PropTypes.func.isRequired,
+};
+
 
 class Group extends Component {
     constructor(props) {
@@ -78,6 +99,7 @@ class Groups extends Component {
     constructor(props) {
         super(props);
         this.goToMessages = this.goToMessages.bind(this);
+        this.goToNewGroup = this.goToNewGroup.bind(this);
     }
 
     keyExtractor = item => item.id;
@@ -88,6 +110,13 @@ class Groups extends Component {
         // props.navigation.state.params in Messages
         navigate('Messages', { groupId: group.id, title: group.name });
     }
+
+    goToNewGroup() {
+        const { navigate } = this.props.navigation;
+        navigate('NewGroup');
+    }
+
+
     renderItem = ({ item }) => <Group group={item} goToMessages={this.goToMessages} />;
 
     render() {
@@ -101,6 +130,15 @@ class Groups extends Component {
                 </View>
             );
         }
+
+        if (user && !user.groups.length) {
+            return (
+                <View style={styles.container}>
+                    <Header onPress={this.goToNewGroup} />
+                    <Text style={styles.warning}>{'You do not have any groups.'}</Text>
+                </View>
+            );
+        }
         // render list of groups for user
         return (
             <View style={styles.container}>
@@ -108,6 +146,7 @@ class Groups extends Component {
                     data={user.groups}
                     keyExtractor={this.keyExtractor}
                     renderItem={this.renderItem}
+                    ListHeaderComponent={() => <Header onPress={this.goToNewGroup} />}
                 />
             </View>
         );
