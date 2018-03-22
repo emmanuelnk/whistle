@@ -2,11 +2,25 @@ export const Schema = [`
   # declare custom scalars
   scalar Date
   # a group chat entity
+  
+  type MessageConnection {
+    edges: [MessageEdge]
+    pageInfo: PageInfo!
+  }
+  type MessageEdge {
+    cursor: String!
+    node: Message!
+  }
+  type PageInfo {
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+  }
+  
   type Group {
     id: Int! # unique id for the group
     name: String # name of the group
     users: [User]! # users in the group
-    messages: [Message] # messages sent to the group
+    messages(first: Int, after: String, last: Int, before: String): MessageConnection # messages sent to the group
   }
   # a user -- keep type really simple for now
   type User {
@@ -41,6 +55,10 @@ export const Schema = [`
     createMessage(
       text: String!, userId: Int!, groupId: Int!
     ): Message
+    createGroup(name: String!, userIds: [Int], userId: Int!): Group
+    deleteGroup(id: Int!): Group
+    leaveGroup(id: Int!, userId: Int!): Group # let user leave group
+    updateGroup(id: Int!, name: String): Group
   }
   
   schema {

@@ -168,6 +168,7 @@ class Messages extends Component {
 Messages.propTypes = {
     createMessage: PropTypes.func,
     navigation: PropTypes.shape({
+        navigate: PropTypes.func,
         state: PropTypes.shape({
             params: PropTypes.shape({
                 groupId: PropTypes.number,
