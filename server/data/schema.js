@@ -14,8 +14,7 @@ export const Schema = [`
   type PageInfo {
     hasNextPage: Boolean!
     hasPreviousPage: Boolean!
-  }
-  
+  }  
   type Group {
     id: Int! # unique id for the group
     name: String # name of the group

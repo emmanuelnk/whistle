@@ -13,6 +13,8 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import randomColor from 'randomcolor';
 import { graphql, compose } from 'react-apollo';
+import update from 'immutability-helper';
+import { Buffer } from 'buffer';
 import Message from '../components/message.component';
 import MessageInput from '../components/message-input.component';
 import GROUP_QUERY from '../graphql/group.query';
@@ -72,8 +74,12 @@ class Messages extends Component {
         super(props);
         this.state = {
             usernameColors: {},
+            refreshing: false
         };
+
+        this.renderItem = this.renderItem.bind(this);
         this.send = this.send.bind(this);
+        this.onEndReached = this.onEndReached.bind(this);
     }
 
     static navigationOptions = ({ navigation }) => {
@@ -120,15 +126,32 @@ class Messages extends Component {
         }
     }
 
-    keyExtractor = item => item.id;
+    keyExtractor = item => item.node.id.toString();
 
-    renderItem = ({ item: message }) => (
-        <Message
-            color={this.state.usernameColors[message.from.username]}
-            isCurrentUser={message.from.id === 1} // for now until we implement auth
-            message={message}
-        />
-    );
+    renderItem = ({ item: edge }) => {
+        const message = edge.node;
+        return (
+            <Message
+                color={this.state.usernameColors[message.from.username]}
+                isCurrentUser={message.from.id === 1} // for now until we implement auth
+                message={message}
+            />
+        );
+    };
+
+    onEndReached() {
+        if (!this.state.loadingMoreEntries &&
+            this.props.group.messages.pageInfo.hasNextPage) {
+            this.setState({
+                loadingMoreEntries: true,
+            });
+            this.props.loadMoreEntries().then(() => {
+                this.setState({
+                    loadingMoreEntries: false,
+                });
+            });
+        }
+    }
 
     send(text) {
         this.props.createMessage({
@@ -136,14 +159,14 @@ class Messages extends Component {
             userId: 1, // faking the user for now
             text,
         }).then(() => {
-            this.flatList.scrollToEnd({ animated: true });
+            this.flatList.scrollToIndex({ index: 0, animated: true });
         });
     };
 
     render() {
         const { loading, group } = this.props;
         // render loading placeholder while we fetch messages
-        if (loading && !group) {
+        if (loading || !group) {
             return (
                 <View style={[styles.loading, styles.container]}>
                     <ActivityIndicator />
@@ -154,10 +177,12 @@ class Messages extends Component {
         return (
             <View style={styles.container}>
                 <FlatList
-                    data={group.messages.slice().reverse()}
+                    inverted
+                    data={group.messages.edges}
                     ref={(ref) => { this.flatList = ref; }}
                     keyExtractor={this.keyExtractor}
                     renderItem={this.renderItem}
+                    onEndReached={this.onEndReached}
                 />
                 <MessageInput send={this.send} />
             </View>
@@ -176,24 +201,57 @@ Messages.propTypes = {
         }),
     }),
     group: PropTypes.shape({
-        messages: PropTypes.array,
+        messages: PropTypes.shape({
+            edges: PropTypes.arrayOf(PropTypes.shape({
+                cursor: PropTypes.string,
+                node: PropTypes.object,
+            })),
+            pageInfo: PropTypes.shape({
+                hasNextPage: PropTypes.bool,
+                hasPreviousPage: PropTypes.bool,
+            }),
+        }),
         users: PropTypes.array,
     }),
     loading: PropTypes.bool,
+    loadMoreEntries: PropTypes.func,
 };
 
+const ITEMS_PER_PAGE = 10;
 const groupQuery = graphql(GROUP_QUERY, {
     options: ownProps => ({
         variables: {
             groupId: ownProps.navigation.state.params.groupId,
+            first: ITEMS_PER_PAGE,
         },
     }),
-    props: ({ data: { loading, group, error  } }) => {
-        if(error) {
-            console.log("GQL Err:", error);
-        }
-        return {loading, group};
-    },
+    props: ({ data: { fetchMore, loading, group } }) => ({
+        loading,
+        group,
+        loadMoreEntries() {
+            return fetchMore({
+                // query: ... (you can specify a different query.
+                // GROUP_QUERY is used by default)
+                variables: {
+                    // load more queries starting from the cursor of the last (oldest) message
+                    after: group.messages.edges[group.messages.edges.length - 1].cursor,
+                },
+                updateQuery: (previousResult, { fetchMoreResult }) => {
+                    // we will make an extra call to check if no more entries
+                    if (!fetchMoreResult) { return previousResult; }
+                    // push results (older messages) to end of messages list
+                    return update(previousResult, {
+                        group: {
+                            messages: {
+                                edges: { $push: fetchMoreResult.group.messages.edges },
+                                pageInfo: { $set: fetchMoreResult.group.messages.pageInfo },
+                            },
+                        },
+                    });
+                },
+            });
+        },
+    }),
 });
 
 const createMessageMutation = graphql(CREATE_MESSAGE_MUTATION, {
@@ -216,6 +274,7 @@ const createMessageMutation = graphql(CREATE_MESSAGE_MUTATION, {
                         to: {
                             __typename: 'Group',
                             id: groupId,
+                            first: ITEMS_PER_PAGE,
                         },
                     },
                 },
@@ -231,12 +290,17 @@ const createMessageMutation = graphql(CREATE_MESSAGE_MUTATION, {
                         return data;
                     }
                     // Add our message from the mutation to the end.
-                    data.group.messages.unshift(createMessage);
+                    data.group.messages.edges.unshift({
+                        __typename: 'MessageEdge',
+                        node: createMessage,
+                        cursor: Buffer.from(createMessage.id.toString()).toString('base64'),
+                    });
                     // Write our data back to the cache.
                     store.writeQuery({
                         query: GROUP_QUERY,
                         variables: {
                             groupId,
+                            first: ITEMS_PER_PAGE,
                         },
                         data,
                     });
