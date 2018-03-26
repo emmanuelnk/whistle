@@ -1,4 +1,5 @@
 /node_modules
-/whistle.sqlite
-/test.js
+whistle.sqlite
+test.js
+/.idea
 
