@@ -3,6 +3,14 @@ export const Schema = [`
   scalar Date
   # a group chat entity
   
+  # input for relay cursor connections
+  input ConnectionInput {
+    first: Int
+    after: String
+    last: Int
+    before: String
+  }
+  
   type MessageConnection {
     edges: [MessageEdge]
     pageInfo: PageInfo!
@@ -14,12 +22,13 @@ export const Schema = [`
   type PageInfo {
     hasNextPage: Boolean!
     hasPreviousPage: Boolean!
-  }  
+  }
+  
   type Group {
     id: Int! # unique id for the group
     name: String # name of the group
     users: [User]! # users in the group
-    messages(first: Int, after: String, last: Int, before: String): MessageConnection # messages sent to the group
+    messages(messageConnection: ConnectionInput!): MessageConnection! # messages sent to the group
   }
   # a user -- keep type really simple for now
   type User {

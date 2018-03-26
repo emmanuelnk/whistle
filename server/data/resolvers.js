@@ -1,5 +1,7 @@
 import GraphQLDate from 'graphql-date';
 import { Group, Message, User } from './connectors';
+import {Buffer} from 'buffer';
+
 export const Resolvers = {
     Date: GraphQLDate,
     PageInfo: {
@@ -40,6 +42,7 @@ export const Resolvers = {
                     cursor: Buffer.from(message.id.toString()).toString('base64'), // convert id to cursor
                     node: message, // the node is the message itself
                 }));
+                console.log('edges', edges);
                 return {
                     edges,
                     pageInfo: {
@@ -55,7 +58,10 @@ export const Resolvers = {
                                     },
                                 },
                                 order: [['id', 'DESC']],
-                            }).then(message => !!message);
+                            }).then((message) => {
+                                console.log('message', message);
+                                return !!message;
+                            });
                         },
                         hasPreviousPage() {
                             return Message.findOne({
@@ -64,7 +70,10 @@ export const Resolvers = {
                                     id: where.id,
                                 },
                                 order: [['id']],
-                            }).then(message => !!message);
+                            }).then((message) => {
+                                console.log('message', message);
+                                return !!message;
+                            });
                         },
                     },
                 };

@@ -50,10 +50,10 @@ db.sync({ force: true }).then(() => _.times(GROUPS, () => GroupModel.create({
         username: faker.internet.userName(),
         password,
     }).then((user) => {
-        console.log(
-            '{email, username, password}',
-            `{${user.email}, ${user.username}, ${password}}`
-        );
+        // console.log(
+        //     '{email, username, password}',
+        //     `{${user.email}, ${user.username}, ${password}}`
+        // );
         _.times(MESSAGES_PER_USER, () => MessageModel.create({
             userId: user.id,
             groupId: group.id,
